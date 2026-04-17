@@ -4,7 +4,7 @@ Automatically logs every Claude Code session to an Obsidian vault as clean Markd
 
 ## How it works
 
-- **At session start**, Claude asks you to name the session and choose a project type (`script` or `app`).
+- **At session start**, Claude asks you to name the session and choose a project type (`script`/`simple` or `app`).
 - **After every response**, a Stop hook reads the raw JSONL transcript Claude Code maintains and appends only new content to the Obsidian note.
 - **On resume**, if the session was never logged, Claude prompts for a name and backfills the full conversation.
 
@@ -12,8 +12,10 @@ Automatically logs every Claude Code session to an Obsidian vault as clean Markd
 
 | Type | What gets logged |
 |------|-----------------|
-| `app` | Human and assistant messages only |
-| `script` | Messages + Bash commands, their output (5-line preview), and file edits |
+| `script` or `simple` | Messages + Bash commands, their output (5-line preview), and file edits |
+| `app` | Human and assistant messages only — no tool calls or code changes |
+
+Use `script` or `simple` for scripts, experiments, and short conversations where you want a full record. Use `app` for large multi-file projects where logging every file edit would be too noisy.
 
 ## File layout
 
@@ -70,7 +72,7 @@ been initialised (look for a prior confirmation or `init-session.sh` call).
 
 If not, your FIRST response must ask:
 > **What would you like to name this session?**
-> Also: script/tool project or application project? Reply `skip` to skip.
+> Also: script/simple conversation (full logging) or full application (conversation only)? Reply `skip` to skip.
 
 After the user replies, run:
 `bash /path/to/claude-convo-save/scripts/init-session.sh "<name>" "<type>"`

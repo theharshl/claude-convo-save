@@ -306,6 +306,10 @@ def entry_to_md(entry: dict, project_type: str, tool_id_map: dict) -> str | None
 # ---------------------------------------------------------------------------
 
 def cmd_init(name: str, project_type: str) -> None:
+    # "simple" is a user-facing alias for script-level logging
+    if project_type == "simple":
+        project_type = "script"
+
     state = load_state()
 
     ts = datetime.now()
@@ -422,7 +426,8 @@ def main() -> None:
 
     p_init = sub.add_parser("init", help="Initialise a new session")
     p_init.add_argument("name", help="Session name")
-    p_init.add_argument("type", choices=["script", "app"], help="Project type")
+    p_init.add_argument("type", choices=["script", "simple", "app"],
+                        help="Project type: script/simple (full logging) or app (conversation only)")
 
     p_save = sub.add_parser("save", help="Append new entries to markdown")
     p_save.add_argument("--from-stdin", action="store_true",
