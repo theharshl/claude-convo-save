@@ -17,8 +17,13 @@ from pathlib import Path
 OBSIDIAN_BASE = Path("/Users/lharsh/Obsidian/Landon/AI Managed/Conversations")
 STATE_FILE = Path.home() / ".claude" / "session-logger" / "state.json"
 
-# Tool names whose output we include for "script" project type
-SCRIPT_TOOLS_INCLUDE = {"Bash", "Write", "Edit"}
+def _normalize_type(project_type: str) -> str:
+    """Map legacy type names to canonical ones."""
+    if project_type in ("script", "simple"):
+        return "full"
+    if project_type == "app":
+        return "partial"
+    return project_type
 
 # Tool names we always skip in output (internal/noisy)
 TOOLS_SKIP = {"Read", "Glob", "Grep", "Agent", "TodoWrite", "TodoRead",
@@ -198,6 +203,7 @@ def entry_to_md(entry: dict, project_type: str, tool_id_map: dict) -> str | None
     Convert one JSONL entry to markdown.  Returns None if the entry should
     be silently skipped (e.g. metadata entries, empty messages).
     """
+    project_type = _normalize_type(project_type)
     etype = entry.get("type")
 
     # ---- user turn --------------------------------------------------------
@@ -224,10 +230,10 @@ def entry_to_md(entry: dict, project_type: str, tool_id_map: dict) -> str | None
 
                 tool_name = tool_id_map.get(block.get("tool_use_id", ""), "")
 
-                # For app projects skip all tool output
-                if project_type == "app":
+                # For partial projects skip all tool output
+                if project_type == "partial":
                     continue
-                # For script projects skip internal/noisy tools
+                # Skip internal/noisy tools
                 if tool_name in TOOLS_SKIP:
                     continue
 
@@ -267,7 +273,7 @@ def entry_to_md(entry: dict, project_type: str, tool_id_map: dict) -> str | None
                 if t:
                     text_parts.append(t)
 
-            elif btype == "tool_use" and project_type == "script":
+            elif btype == "tool_use" and project_type in ("full", "partial"):
                 tool_name = block.get("name", "")
                 if tool_name in TOOLS_SKIP:
                     continue
@@ -306,9 +312,7 @@ def entry_to_md(entry: dict, project_type: str, tool_id_map: dict) -> str | None
 # ---------------------------------------------------------------------------
 
 def cmd_init(name: str, project_type: str) -> None:
-    # "simple" is a user-facing alias for script-level logging
-    if project_type == "simple":
-        project_type = "script"
+    project_type = _normalize_type(project_type)
 
     state = load_state()
 
@@ -426,8 +430,8 @@ def main() -> None:
 
     p_init = sub.add_parser("init", help="Initialise a new session")
     p_init.add_argument("name", help="Session name")
-    p_init.add_argument("type", choices=["script", "simple", "app"],
-                        help="Project type: script/simple (full logging) or app (conversation only)")
+    p_init.add_argument("type", choices=["full", "partial", "script", "simple", "app"],
+                        help="full (conversation + tool calls + output preview) or partial (conversation + tool calls, no output); script/simple/app are legacy aliases")
 
     p_save = sub.add_parser("save", help="Append new entries to markdown")
     p_save.add_argument("--from-stdin", action="store_true",

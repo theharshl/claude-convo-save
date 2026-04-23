@@ -2,7 +2,7 @@
 # Initialise a Claude Code logging session.
 # Called by Claude when the user names a new (or previously un-logged) session.
 #
-# Usage: init-session.sh "Session Name" "script|app"
+# Usage: init-session.sh "Session Name" "full|partial"
 
 set -euo pipefail
 
